@@ -1,0 +1,168 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.ensemble import RandomForestRegressor
+from datetime import timedelta
+import joblib
+import os
+
+plt.rcParams["figure.figsize"] = (12, 5)
+sns.set_style("whitegrid")
+
+# =========================
+# 1. Load Dataset
+# =========================
+from google.colab import files
+uploaded = files.upload()  # Will prompt if no file present
+filename = list(uploaded.keys())[0]
+df = pd.read_csv(filename)
+
+
+# Detect date column
+datetime_col = None
+for col in df.columns:
+    if "date" in col.lower() or "time" in col.lower():
+        datetime_col = col
+        break
+if datetime_col is None:
+    datetime_col = df.columns[0]
+    print(f" No explicit date column found. Using '{datetime_col}' as datetime.")
+
+df['datetime'] = pd.to_datetime(df[datetime_col], errors='coerce')
+df = df.dropna(subset=['datetime']).sort_values('datetime').set_index('datetime')
+
+# Standardize column names
+df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+
+# Find AQI column
+aqi_col = next((c for c in df.columns if "aqi" in c), None)
+if aqi_col:
+    df['aqi'] = pd.to_numeric(df[aqi_col], errors='coerce')
+else:
+    raise ValueError("AQI column not found in dataset!")
+
+# Daily average AQI
+daily = df[['aqi']].resample('D').mean()
+daily['aqi'] = daily['aqi'].interpolate(method='linear')
+
+# Feature engineering
+df_daily = daily.reset_index()
+df_daily['date'] = df_daily['datetime'].dt.date
+for lag in range(1, 8):
+    df_daily[f'aqi_lag_{lag}'] = df_daily['aqi'].shift(lag)
+
+df_daily['dayofyear'] = df_daily['datetime'].dt.dayofyear
+df_daily['month'] = df_daily['datetime'].dt.month
+df_daily['weekday'] = df_daily['datetime'].dt.weekday
+
+df_model = df_daily.dropna().copy()
+for h in range(1, 8):
+    df_model.loc[:, f'y_{h}'] = df_model['aqi'].shift(-h)
+df_model = df_model.dropna()
+
+feature_cols = [f'aqi_lag_{i}' for i in range(1, 8)] + ['dayofyear', 'month', 'weekday']
+target_cols = [f'y_{h}' for h in range(1, 8)]
+
+X = df_model[feature_cols].values
+Y = df_model[target_cols].values
+
+# Train/Test split
+n = len(df_model)
+split = n - int(0.2 * n)
+X_train, X_test = X[:split], X[split:]
+Y_train, Y_test = Y[:split], Y[split:]
+
+# Train model
+model = RandomForestRegressor(n_estimators=150, random_state=42, n_jobs=-1)
+model.fit(X_train, Y_train)
+
+# =========================
+# Helper Functions
+# =========================
+def get_precaution(aqi):
+    if aqi <= 50: return "Good – Safe for all"
+    elif aqi <= 100: return "Moderate – Sensitive people take care"
+    elif aqi <= 200: return "Poor– Children & elderly limit outdoor activities"
+    elif aqi <= 300: return " Very Poor – Asthma patients avoid exertion"
+    else: return " Severe – Stay indoors, use N95 mask if outside"
+
+def plot_aqi_distribution(df):
+    plt.figure(figsize=(10,4))
+    sns.histplot(df['aqi'], bins=30, kde=True, color="teal")
+    plt.title(" AQI Distribution (All Data)")
+    plt.xlabel("AQI Value")
+    plt.ylabel("Frequency")
+    plt.show()
+
+def plot_last_month_trend(df):
+    last_month = df.tail(30)
+    plt.figure(figsize=(10,4))
+    plt.plot(last_month.index, last_month['aqi'], marker='o')
+    plt.title(" AQI Trend (Last 30 Days)")
+    plt.xlabel("Date")
+    plt.ylabel("AQI")
+    plt.xticks(rotation=45)
+    plt.show()
+
+def plot_pie_chart(df):
+    categories = pd.cut(df['aqi'],
+                        bins=[0,50,100,200,300,500],
+                        labels=['Good','Moderate','Poor','Very Poor','Severe'])
+    category_counts = categories.value_counts()
+    plt.figure(figsize=(5,5))
+    plt.pie(category_counts, labels=category_counts.index, autopct='%1.1f%%', startangle=140)
+    plt.title(" AQI Category Distribution")
+    plt.show()
+
+# =========================
+# 2. Visualization Before Prediction
+# =========================
+plot_aqi_distribution(daily)
+plot_last_month_trend(daily)
+plot_pie_chart(daily)
+
+# =========================
+# 3. User Mode Selection
+# =========================
+print("\nChoose Mode:")
+print("1.  Predict Next 7 Days AQI (Automatic)")
+print("2.  Manual Check for Single AQI Value")
+choice = input("Enter choice (1 or 2): ").strip()
+
+if choice == "1":
+    latest_features = df_model.iloc[-1:][feature_cols].values
+    future_preds = model.predict(latest_features)[0]
+    pred_dates = [pd.to_datetime(df_model.iloc[-1]['date']) + timedelta(days=i+1) for i in range(7)]
+    pred_df = pd.DataFrame({"date": pred_dates, "predicted_AQI": future_preds})
+    pred_df['precaution'] = pred_df['predicted_AQI'].apply(get_precaution)
+    print("\n Next 7 Days Prediction:\n")
+    print(pred_df)
+
+    # Plot prediction
+    plt.figure(figsize=(10,4))
+    plt.plot(pred_df['date'], pred_df['predicted_AQI'], marker='o', color="red", label="Predicted AQI")
+    plt.axhline(100, color="green", linestyle="--", label="Moderate Limit")
+    plt.axhline(200, color="orange", linestyle="--", label="Poor Limit")
+    plt.axhline(300, color="red", linestyle="--", label="Very Poor Limit")
+    plt.title(" AQI Forecast (Next 7 Days)")
+    plt.xlabel("Date")
+    plt.ylabel("Predicted AQI")
+    plt.legend()
+    plt.show()
+
+elif choice == "2":
+    user_aqi = float(input("Enter current AQI value: "))
+    print(f"\n Your AQI: {user_aqi}")
+    print(f"Health Advice: {get_precaution(user_aqi)}")
+
+    latest_row = df_model.iloc[-1:].copy()
+    for i in range(7, 1, -1):
+        latest_row[f'aqi_lag_{i}'] = latest_row[f'aqi_lag_{i-1}']
+    latest_row['aqi_lag_1'] = user_aqi
+    tomorrow_pred = model.predict(latest_row[feature_cols].values)[0][0]
+
+    print(f"Predicted AQI for Tomorrow: {tomorrow_pred:.2f} ({get_precaution(tomorrow_pred)})")
+
+else:
+    print(" Invalid choice. Exiting.")
