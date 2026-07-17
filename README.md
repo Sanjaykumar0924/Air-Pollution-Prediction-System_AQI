@@ -1,3 +1,5 @@
+<img width="1092" height="556" alt="Screenshot 2026-07-17 211247" src="https://github.com/user-attachments/assets/11eb6ce3-149f-4bee-b8a6-7868e142a9ba" />
+<img width="1092" height="556" alt="Screenshot 2026-07-17 211247" src="https://github.com/user-attachments/assets/6a84764a-0962-4b3e-ae53-2336cc0c1cf5" />
 # 🌍 Air Pollution Prediction System
 
 <p align="center">
@@ -258,25 +260,27 @@ The application automatically generates precautionary messages for each AQI cate
 
 ## AQI Distribution
 
-<img src="images/distribution.png">
+<img width="1092" height="556" alt="Screenshot 2026-07-17 211247" src="https://github.com/user-attachments/assets/3c343290-7651-4acc-b4b6-89896f558ee8" />
+
 
 ---
 
 ## Last 30 Days Trend
+<img width="1088" height="560" alt="Screenshot 2026-07-17 211301" src="https://github.com/user-attachments/assets/6b1297e2-9fd2-4cef-aa69-f46c6dbd058e" />
 
-<img src="images/trend.png">
 
 ---
 
 ## AQI Category Pie Chart
+<img width="538" height="538" alt="Screenshot 2026-07-17 211310" src="https://github.com/user-attachments/assets/524a4fba-ead2-4d7e-a7a6-885d91c8af5b" />
 
-<img src="images/piechart.png">
 
 ---
 
 ## AQI Forecast
+<img width="1283" height="591" alt="Screenshot 2026-07-17 211337" src="https://github.com/user-attachments/assets/a2171bce-8baf-4193-b4f0-ceb2ea0d5153" />
 
-<img src="images/forecast.png">
+<img width="1282" height="586" alt="Screenshot 2026-07-17 211344" src="https://github.com/user-attachments/assets/fce3ccf7-1770-4c73-b0db-6146eba5f2de" />
 
 ---
 
@@ -372,6 +376,9 @@ Enter a custom AQI value to
 - Predict tomorrow's AQI
 
 ---
+#  Output Screenshot
+<img width="743" height="467" alt="Screenshot 2026-07-17 211414" src="https://github.com/user-attachments/assets/61453c3f-5ed9-4c6f-b4c0-eb081bc01209" />
+
 
 # 📌 Future Enhancements
 
