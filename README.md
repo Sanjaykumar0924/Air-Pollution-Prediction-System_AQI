@@ -2,10 +2,6 @@
 # 🌍 Air Pollution Prediction System
 
 <p align="center">
-  <img src="images/banner.png" alt="Air Pollution Prediction System" width="900"/>
-</p>
-
-<p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-blue.svg">
   <img src="https://img.shields.io/badge/Scikit--Learn-Random%20Forest-orange">
   <img src="https://img.shields.io/badge/ML-Time%20Series-green">
