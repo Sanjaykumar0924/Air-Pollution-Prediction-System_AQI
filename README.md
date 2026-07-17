@@ -1,5 +1,4 @@
-<img width="1092" height="556" alt="Screenshot 2026-07-17 211247" src="https://github.com/user-attachments/assets/11eb6ce3-149f-4bee-b8a6-7868e142a9ba" />
-<img width="1092" height="556" alt="Screenshot 2026-07-17 211247" src="https://github.com/user-attachments/assets/6a84764a-0962-4b3e-ae53-2336cc0c1cf5" />
+
 # 🌍 Air Pollution Prediction System
 
 <p align="center">
